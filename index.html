@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>(mw)stalk</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
+    <style>
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0 3px;
+            background-color: #4e63e8;
+            border-radius: 50%;
+            animation: loading 0.8s infinite alternate;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .embed-card.hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        function formatRank(rank, username) {
+            switch(rank) {
+                case '[MVP++]':
+                    return `<span style="color: #FFAA00;">[MVP</span><span style="color: #FF5555;">++</span><span style="color: #FFAA00;">]</span><span style="color: #FFAA00;"> ${username}</span>`;
+                case '[MVP+]':
+                    return `<span style="color: #55FFFF;">[MVP</span><span style="color: #FF5555;">+</span><span style="color: #55FFFF;">]</span><span style="color: #55FFFF;"> ${username}</span>`;
+                case '[MVP]':
+                    return `<span style="color: #55FFFF;">[MVP] ${username}</span>`;
+                case '[VIP+]':
+                    return `<span style="color: #55FF55;">[VIP</span><span style="color: #FFAA00;">+</span><span style="color: #55FF55;">]</span><span style="color: #55FF55;"> ${username}</span>`;
+                case '[VIP]':
+                    return `<span style="color: #55FF55;">[VIP] ${username}</span>`;
+                default:
+                    return `<span style="color: #AAAAAA;">${username}</span>`;
+            }
+        }
+
+        async function fetchData() {
+            const username = document.getElementById('username').value;
+            const result = document.getElementById('result');
+            const loading = document.getElementById('loading');
+
+            if (username.trim() === "") {
+                result.innerHTML = "";
+                result.classList.add("hidden");
+                loading.style.display = "none";
+                return;
+            }
+
+            loading.style.display = "block";
+            result.classList.add("hidden");
+
+            const response = await fetch(`http://192.168.173.151:5000/api/data?username=${username}`);
+
+            loading.style.display = "none";
+
+            if (response.ok) {
+                const data = await response.json();
+                const formattedRank = formatRank(data.rank, data.username);
+                result.innerHTML = `
+                    <div class="embed-card">
+                        <p class="class-skin">${formattedRank} || <code class="markdown">${data.class}</code> - <code class="markdown">${data.skin}</code></p>
+                        <p class="last-action">Last quest action was <code class="markdown">${data.event}</code> and <code class="markdown">${data.time}</code> ago</p>
+                    </div>
+                `;
+                result.classList.remove("hidden");
+            } else {
+                const error = await response.json();
+                result.textContent = error.message;
+                result.classList.remove("hidden");
+            }
+        }
+
+        function toggleMode() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            const modeIcon = document.getElementById('mode-icon');
+            if (body.classList.contains('light-mode')) {
+                modeIcon.textContent = '🌙'; // Moon emoji for dark mode
+            } else {
+                modeIcon.textContent = '☀️'; // Sun emoji for light mode
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('fetch-button').addEventListener('click', fetchData);
+            document.getElementById('toggle-mode').addEventListener('click', toggleMode);
+            document.getElementById('username').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    fetchData();
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>(mw)<span>stalk</span></h1>
+        </div>
+        <div class="input-container">
+            <input type="text" id="username" placeholder="Enter a username">
+            <button id="fetch-button">Fetch</button>
+        </div>
+        <div id="loading" class="loading">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div id="result" class="embed-card hidden"></div>
+        <button id="toggle-mode" class="toggle-button">
+            <span id="mode-icon">☀️</span>
+        </button>
+    </div>
+</body>
+</html>
