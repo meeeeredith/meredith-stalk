@@ -42,6 +42,11 @@
         .embed-card.hidden {
             display: none;
         }
+
+        .disabled-button {
+            background-color: gray;
+            cursor: not-allowed;
+        }
     </style>
     <script>
         function formatRank(rank, username) {
@@ -65,6 +70,7 @@
             const username = document.getElementById('username').value;
             const result = document.getElementById('result');
             const loading = document.getElementById('loading');
+            const fetchButton = document.getElementById('fetch-button');
 
             if (username.trim() === "") {
                 result.innerHTML = "";
@@ -75,25 +81,41 @@
 
             loading.style.display = "block";
             result.classList.add("hidden");
+            fetchButton.disabled = true;  // Disable the button
+            fetchButton.classList.add('disabled-button');  // Change button style
 
-            const response = await fetch(`http://192.168.173.151:5000/api/data?username=${username}`);
+            try {
+                const response = await fetch(`http://192.168.173.151:5000/api/data?username=${username}`);
+                loading.style.display = "none";
 
-            loading.style.display = "none";
-
-            if (response.ok) {
-                const data = await response.json();
-                const formattedRank = formatRank(data.rank, data.username);
-                result.innerHTML = `
-                    <div class="embed-card">
-                        <p class="class-skin">${formattedRank} || <code class="markdown">${data.class}</code> - <code class="markdown">${data.skin}</code></p>
-                        <p class="last-action">Last quest action was <code class="markdown">${data.event}</code> and <code class="markdown">${data.time}</code> ago</p>
-                    </div>
-                `;
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);  // Debugging statement
+                    const formattedRank = formatRank(data.rank, data.username);
+                    result.innerHTML = `
+                        <div class="embed-card">
+                            <p class="class-skin">${formattedRank} || <code class="markdown">${data.class}</code> - <code class="markdown">${data.skin}</code></p>
+                            <p class="last-action">Last quest action was <code class="markdown">${data.event}</code> and <code class="markdown">${data.time}</code> ago</p>
+                        </div>
+                    `;
+                    console.log(result.innerHTML);  // Debugging statement
+                    result.classList.remove("hidden");
+                } else {
+                    const error = await response.json();
+                    console.log(error);  // Debugging statement
+                    result.textContent = error.message;
+                    result.classList.remove("hidden");
+                }
+            } catch (error) {
+                console.log(error);  // Debugging statement
+                result.textContent = 'An error occurred';
                 result.classList.remove("hidden");
-            } else {
-                const error = await response.json();
-                result.textContent = error.message;
-                result.classList.remove("hidden");
+                loading.style.display = "none";
+            } finally {
+                setTimeout(() => {
+                    fetchButton.disabled = false;  // Re-enable the button after 7 seconds
+                    fetchButton.classList.remove('disabled-button');  // Reset button style
+                }, 7000);
             }
         }
 
