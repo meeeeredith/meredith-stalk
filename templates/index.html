@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>mw(stalk)</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="static/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap">
     <style>
         .loading {
@@ -85,7 +85,7 @@
             fetchButton.classList.add('disabled-button');  // Change button style
 
             try {
-                const response = await fetch(`http://192.168.173.151:5000/api/data?username=${username}`);
+                const response = await fetch(`/api/data?username=${username}`);
                 loading.style.display = "none";
 
                 if (response.ok) {
@@ -112,10 +112,18 @@
                 result.classList.remove("hidden");
                 loading.style.display = "none";
             } finally {
-                setTimeout(() => {
-                    fetchButton.disabled = false;  // Re-enable the button after 7 seconds
-                    fetchButton.classList.remove('disabled-button');  // Reset button style
-                }, 4444);
+                let countdown = 4.4;
+                const countdownInterval = setInterval(() => {
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        fetchButton.disabled = false;  // Re-enable the button
+                        fetchButton.classList.remove('disabled-button');  // Reset button style
+                        fetchButton.textContent = 'Fetch';
+                    } else {
+                        fetchButton.textContent = `${countdown.toFixed(1)}s`;
+                        countdown -= 0.1;
+                    }
+                }, 100);
             }
         }
 
